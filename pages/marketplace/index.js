@@ -32,6 +32,7 @@ export default function Marketplace({ courses }) {
       </div>
       <EthRates
         eth={eth.data}
+        ethPerItem={eth.perItem}
       />
       <CourseList
         courses={courses}
