@@ -13,6 +13,9 @@
       ],
       "@content/*": [
         "content/*"
+      ],
+      "@utils/*": [
+        "utils/*"
       ]
     }
   }
