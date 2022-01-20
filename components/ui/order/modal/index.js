@@ -9,10 +9,31 @@ const defaultOrder = {
   confirmationEmail: ""
 }
 
-export default function OrderModal({ course, onClose }) {
+const _createFormState = (isDisabled = false, message = "") => ({ isDisabled, message })
+
+const createFormState = ({ price, email, confirmationEmail }, hasAgreedTOS) => {
+  if (!price || Number(price) <= 0) {
+    return _createFormState(true, "Price is not valid.")
+  }
+  else if (confirmationEmail.length === 0 || email.length === 0) {
+    return _createFormState(true)
+  }
+  else if (email !== confirmationEmail) {
+    return _createFormState(true, "Email are not matching.")
+  }
+
+  else if (!hasAgreedTOS) {
+    return _createFormState(true, "You need to agree with terms of service in order to submit the form")
+  }
+
+  return _createFormState()
+}
+
+export default function OrderModal({ course, onClose, onSubmit }) {
   const [isOpen, setIsOpen] = useState(false)
   const [order, setOrder] = useState(defaultOrder)
   const [enablePrice, setEnablePrice] = useState(false)
+  const [hasAgreedTOS, setHasAgreedTOS] = useState(false)
   const { eth } = useEthPrice()
 
   useEffect(() => {
@@ -30,6 +51,8 @@ export default function OrderModal({ course, onClose }) {
     setOrder(defaultOrder)
     onClose()
   }
+
+  const formState = createFormState(order, hasAgreedTOS)
 
   return (
     <Modal isOpen={isOpen}>
@@ -120,18 +143,29 @@ export default function OrderModal({ course, onClose }) {
               <div className="text-xs text-gray-700 flex">
                 <label className="flex items-center mr-2">
                   <input
+                    checked={hasAgreedTOS}
+                    onChange={({ target: { checked } }) => {
+                      setHasAgreedTOS(checked)
+                    }}
                     type="checkbox"
                     className="form-checkbox" />
                 </label>
                 <span>I accept Eincode &apos;terms of service&apos; and I agree that my order can be rejected in the case data provided above are not correct</span>
               </div>
+              {formState.message &&
+                <div className="p-4 my-3 text-yellow-700 bg-yellow-200 rounded-lg text-sm">
+                  {formState.message}
+                </div>
+              }
             </div>
           </div>
         </div>
         <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex">
-          <Button onClick={() => {
-            alert(JSON.stringify(order))
-          }}>
+          <Button
+            disabled={formState.isDisabled}
+            onClick={() => {
+              onSubmit(order)
+            }}>
             Submit
           </Button>
           <Button
