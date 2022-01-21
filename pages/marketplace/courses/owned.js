@@ -9,9 +9,10 @@ export default function OwnedCourses({ courses }) {
   const { account } = useAccount();
   const { ownedCourses } = useOwnedCourses(courses, account.data);
 
+  console.log(ownedCourses);
+
   return (
     <>
-      {JSON.stringify(ownedCourses.data)}
       <div className="py-4">
         <MarketHeader />
       </div>
