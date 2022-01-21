@@ -16,7 +16,6 @@ export default function Marketplace({ courses }) {
   const [selectedCourse, setSelectedCourse] = useState(null)
 
   const purchaseCourse = async order => {
-    debugger
     const hexCourseId = web3.utils.utf8ToHex(selectedCourse.id)
     const orderHash = web3.utils.soliditySha3(
       { type: "bytes16", value: hexCourseId },

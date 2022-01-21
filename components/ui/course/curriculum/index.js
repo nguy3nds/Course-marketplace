@@ -10,7 +10,6 @@ const lectures = [
 ]
 
 export default function Curriculum({ locked, courseState }) {
-  debugger
 
   const statusClass = "px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
   return (
