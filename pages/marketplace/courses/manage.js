@@ -8,7 +8,7 @@ export default function ManageCourses() {
   const { account } = useAccount()
   const { managedCourses } = useManagedCourses(account.data)
 
-  console.log({ managedCourses });
+  console.log(managedCourses.data);
 
   return (
     <>
