@@ -26,5 +26,17 @@ export const handler = (web3, contract) => (courses, account) => {
     }
   )
 
-  return swrRes
+  const test = swrRes.data?.reduce((a, c) => {
+    a[c.id] = c
+    return a
+  }, {})
+
+  return {
+    ...swrRes,
+    lookup: swrRes.data?.reduce((a, c) => {
+      a[c.id] = c
+      return a
+    }, {}) ?? {}
+  }
+
 }
