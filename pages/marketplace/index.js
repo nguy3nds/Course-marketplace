@@ -35,9 +35,9 @@ export default function Marketplace({ courses }) {
         { type: "bytes32", value: orderHash }
       )
 
-      _purchaseCourse(hexCourseId, proof, value)
+      withToast(_purchaseCourse(hexCourseId, proof, value))
     } else {
-      _repurchaseCourse(orderHash, value)
+      withToast(_repurchaseCourse(orderHash, value))
     }
   }
 
@@ -47,9 +47,9 @@ export default function Marketplace({ courses }) {
         hexCourseId,
         proof
       ).send({ from: account.data, value })
-      console.log(result)
+      return result
     } catch {
-      console.error("Purchase course: Operation has failed.")
+      throw new Error(error.message)
     }
   }
 
@@ -58,9 +58,9 @@ export default function Marketplace({ courses }) {
       const result = await contract.methods.repurchaseCourse(
         courseHash
       ).send({ from: account.data, value })
-      console.log(result)
+      return result
     } catch {
-      console.error("Purchase course: Operation has failed.")
+      throw new Error(error.message)
     }
   }
 
@@ -75,9 +75,6 @@ export default function Marketplace({ courses }) {
   return (
     <>
       <MarketHeader />
-      <Button onClick={notify}>
-        Notify!
-      </Button>
       <CourseList
         courses={courses}
       >
