@@ -1,3 +1,4 @@
+import { Loader } from '@components/ui/common'
 import { toast } from 'react-toastify'
 
 export const withToast = (promise) => {
@@ -8,6 +9,7 @@ export const withToast = (promise) => {
         render() {
           return (
             <div className="p-6 py-2">
+              <Loader size="sm" />
               <p className="mb-2">
                 Your transaction is being processed.
               </p>

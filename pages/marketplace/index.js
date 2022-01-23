@@ -17,10 +17,11 @@ export default function Marketplace({ courses }) {
   const { ownedCourses } = useOwnedCourses(courses, account.data)
 
   const [selectedCourse, setSelectedCourse] = useState(null)
+  const [busyCourseId, setBusyCourseId] = useState(null)
   const [isNewPurchase, setIsNewPurchase] = useState(true)
 
-  const purchaseCourse = async order => {
-    const hexCourseId = web3.utils.utf8ToHex(selectedCourse.id)
+  const purchaseCourse = async (order, course) => {
+    const hexCourseId = web3.utils.utf8ToHex(course.id)
     const orderHash = web3.utils.soliditySha3(
       { type: "bytes16", value: hexCourseId },
       { type: "address", value: account.data }
@@ -28,6 +29,7 @@ export default function Marketplace({ courses }) {
 
     const value = web3.utils.toWei(String(order.price))
 
+    setBusyCourseId(course.id)
     if (isNewPurchase) {
       const emailHash = web3.utils.sha3(order.email)
       const proof = web3.utils.soliditySha3(
@@ -35,41 +37,63 @@ export default function Marketplace({ courses }) {
         { type: "bytes32", value: orderHash }
       )
 
-      withToast(_purchaseCourse(hexCourseId, proof, value))
+      withToast(_purchaseCourse({ hexCourseId, proof, value }, course))
     } else {
-      withToast(_repurchaseCourse(orderHash, value))
+      withToast(_repurchaseCourse({ courseHash: orderHash, value }, course))
     }
   }
 
-  const _purchaseCourse = async (hexCourseId, proof, value) => {
+  const _purchaseCourse = async ({ hexCourseId, proof, value }, course) => {
     try {
       const result = await contract.methods.purchaseCourse(
         hexCourseId,
         proof
       ).send({ from: account.data, value })
+      // Reload button when purchase success
+      ownedCourses.mutate([
+        ...ownedCourses.data, {
+          ...course,
+          proof,
+          state: "purchased",
+          owner: account.data,
+          price: value
+        }
+      ])
       return result
-    } catch {
+    } catch (error) {
       throw new Error(error.message)
+    } finally {
+      setBusyCourseId(null)
     }
   }
 
-  const _repurchaseCourse = async (courseHash, value) => {
+  const _repurchaseCourse = async ({ courseHash, value }, course) => {
     try {
       const result = await contract.methods.repurchaseCourse(
         courseHash
       ).send({ from: account.data, value })
+
+      const index = ownedCourses.data.findIndex(c => c.id === course.id)
+
+      if (index >= 0) {
+        ownedCourses.data[index].state = "purchased"
+        ownedCourses.mutate(ownedCourses.data)
+      } else {
+        ownedCourses.mutate()
+
+      }
+
       return result
-    } catch {
+    } catch (error) {
       throw new Error(error.message)
+    } finally {
+      setBusyCourseId(null)
     }
   }
 
-  const notify = () => {
-    // const resolveWithSomeData = new Promise(resolve => setTimeout(() => resolve("world"), 3000));
-    const resolveWithSomeData = new Promise(
-      (resolve, reject) => setTimeout(() => reject(new Error("Some Error")), 3000))
-
-    withToast(resolveWithSomeData)
+  const cleanupModal = () => {
+    setSelectedCourse(null)
+    setIsNewPurchase(true)
   }
 
   return (
@@ -111,17 +135,25 @@ export default function Marketplace({ courses }) {
 
                 if (!ownedCourses.hasInitialResponse) {
                   return (
-                    <div style={{ height: "42px" }}></div>
+                    // <div style={{height: "42px"}}></div>
+                    <Button
+                      variant="white"
+                      disabled={true}
+                      size="sm">
+                      Loading State...
+                    </Button>
                   )
                 }
 
+                const isBusy = busyCourseId === course.id
+                // const isBusy = true
                 if (owned) {
                   return (
                     <>
                       <div className="flex">
                         <Button
                           onClick={() => alert("You are owner of this course.")}
-                          disabled={false}
+                          disabled={isBusy}
                           size="sm"
                           variant="white">
                           Yours &#10004;
@@ -136,7 +168,13 @@ export default function Marketplace({ courses }) {
                                 setSelectedCourse(course)
                               }}
                               variant="purple">
-                              Fund to Activate
+                              {isBusy ?
+                                <div className="flex">
+                                  <Loader size="sm" />
+                                  <div className="ml-2">In Progress</div>
+                                </div> :
+                                <div>Fund to Activate</div>
+                              }
                             </Button>
                           </div>
                         }
@@ -150,9 +188,15 @@ export default function Marketplace({ courses }) {
                   <Button
                     onClick={() => setSelectedCourse(course)}
                     size="sm"
-                    disabled={!hasConnectedWallet}
+                    disabled={!hasConnectedWallet || isBusy}
                     variant="lightPurple">
-                    Purchase
+                    {isBusy ?
+                      <div className="flex">
+                        <Loader size="sm" />
+                        <div className="ml-2">In Progress</div>
+                      </div> :
+                      <div>Purchase</div>
+                    }
                   </Button>
                 )
               }
@@ -166,11 +210,11 @@ export default function Marketplace({ courses }) {
         <OrderModal
           course={selectedCourse}
           isNewPurchase={isNewPurchase}
-          onSubmit={purchaseCourse}
-          onClose={() => {
-            setSelectedCourse(null)
-            setIsNewPurchase(true)
+          onSubmit={(formData, course) => {
+            purchaseCourse(formData, course)
+            cleanupModal()
           }}
+          onClose={cleanupModal}
         />
       }
     </>
