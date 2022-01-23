@@ -41,8 +41,6 @@ module.exports = {
 // transaction hash: 0x9ddac87eb5853859e92be7799f8e85c2b885c4e40174b90c2eb46f8390c7bf48
 // contract address: 0xF520b793d7558D38C549fF94F7F7B9794f046632
 
-// NEXT_PUBLIC_TARGET_CHAIN_ID=1337
-// NEXT_PUBLIC_NETWORK_ID=5777
 
 // const instance = await CourseMarketplace.deployed()
 // instance.transferOwnership("0x97B9bba51C243744cbaC79A8cD40a5B6B0175fe3", {from: accounts[0]})
